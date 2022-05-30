@@ -148,5 +148,4 @@ CONFIG = {
 }
 
 column_obj = Column(column_params, base_params, **CONFIG)
-ColumnBase()
 column_obj.ifcfile.write("Samples/" + PROJECTNAME + ".ifc")
