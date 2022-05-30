@@ -111,3 +111,12 @@ class IfcObject():
         self.ifcfile.createIfcRelAggregates(self.guid(), self.owner_history, "Building Container", "Ground level to Building", self.building, [self.building_storey])
         self.ifcfile.createIfcRelAggregates(self.guid(), self.owner_history, "Site Container", "Building to Site", self.site, [self.building])
         self.ifcfile.createIfcRelAggregates(self.guid(), self.owner_history, "Project Container", "Site to Project", self.project, [self.site])
+    
+    def place_ifcelement_in_storey(self, ifcelement, storey):
+        params = {
+            "GlobalId": self.guid(),
+            "OwnerHistory": self.owner_history,
+            "RelatedElements": [ifcelement],
+            "RelatingStructure": storey
+        }
+        self.ifcfile.createIfcRelContainedInSpatialStructure(**params)

@@ -5,13 +5,9 @@ PROJECTNAME = "Column"
 
 class ColumnBase(IfcGeometry):
     """
-    A square shaped column base of square width "w" and height "h"
-    """
-    def __init__(self, base_params, **kwargs):
-        bp = base_params
-        super().__init__(**kwargs)
-        """
-        Creating a Local Coordinate System at (5,5,0) with Pure Translation
+    => A square shaped column base of square width "w" and height "h"
+
+    => Creating a Local Coordinate System at (5,5,0) with Pure Translation (see figure below)
 
         Y
         ^
@@ -25,41 +21,75 @@ class ColumnBase(IfcGeometry):
         |               |
         |--------------------------- > X  ==> Storey's LCS (Local Coordinate System)
 
-        """
+    => Create LCS of base
+    
+    => Construct base Profile (By Creating another placement for 2D drawing, where IfcRectangleProfile is put to use)
+    
+    => Extrude base Profile
+    
+    => Create Product Representation (Here its just the extruded solid body, but this can be combined with some datum plane or axis)
+    
+    => Assign the product to Ifc element called "IfcColumn" with the created LCS
+    
+    => Place the IfcColumn in the ground storey
+    """
+
+    def __init__(self, base_params, **kwargs):
+        super().__init__(**kwargs)
+
+        bp = base_params
         self.base_location = bp.get("base_location")
-        self.w = bp.get("base_width")
-        self.h = bp.get("base_height")
+        self.base_width = bp.get("base_width")
+        self.base_height = bp.get("base_height")
+
         self.base_local_placement = self.create_ifclocalplacement(point = self.base_location, relative_to = self.storey_placement)
-        self.construct_base_profile2d()
-        self.extrude_base_profile()
-        self.base_product_representation = self.create_product_representation(self.extruded_base)
-        self.base_product_as_ifccolumn()
+        base_profile = self.construct_base_profile2d()
+        extruded_base = self.extrude_base_profile(base_profile)
+        base_product_representation = self.create_product_representation(extruded_base)
+        base_as_ifccolumn = self.base_product_as_ifccolumn(base_product_representation)
+        self.place_ifcelement_in_storey(base_as_ifccolumn, self.building_storey)
 
     def construct_base_profile2d(self):
-        self.base_profile_placement = self.ifcfile.createIfcAxis2Placement2D(self.ori, self.Xdir)
-        self.base_profile = self.ifcfile.createIfcRectangleProfileDef("AREA", "Column Base Profile", self.base_profile_placement, self.w, self.w)
+        base_profile_placement = self.ifcfile.createIfcAxis2Placement2D(self.ori, self.Xdir)
+        base_profile = self.ifcfile.createIfcRectangleProfileDef("AREA", "Column Base Profile", base_profile_placement, self.base_width, self.base_width)
+        return base_profile
     
-    def extrude_base_profile(self):
-        self.extruded_base = self.ifcfile.createIfcExtrudedAreaSolid(self.base_profile, self.g_placement, self.Zdir, self.h)
+    def extrude_base_profile(self, base_profile):
+        extruded_base = self.ifcfile.createIfcExtrudedAreaSolid(base_profile, self.g_placement, self.Zdir, self.base_height)
+        return extruded_base
     
-    def base_product_as_ifccolumn(self):
+    def base_product_as_ifccolumn(self, base_product_representation):
         params = {
             "GlobalId": self.guid(),
             "Name": "Column Base",
             "OwnerHistory": self.owner_history,
             "ObjectPlacement": self.base_local_placement,
-            "Representation": self.base_product_representation
+            "Representation": base_product_representation
         }
-        self.base_as_ifccolumn = self.ifcfile.createIfcColumn(**params)
-        params = {
-            "GlobalId": self.guid(),
-            "OwnerHistory": self.owner_history,
-            "RelatedElements": [self.base_as_ifccolumn],
-            "RelatingStructure": self.building_storey
-        }
-        self.ifcfile.createIfcRelContainedInSpatialStructure(**params)
+        base_as_ifccolumn = self.ifcfile.createIfcColumn(**params)
+        return base_as_ifccolumn
 
 class Column(ColumnBase):
+    """
+    => A column with standard Ifc parameters see https://standards.buildingsmart.org/IFC/DEV/IFC4_3/RC1/HTML/schema/ifcprofileresource/lexical/ifcishapeprofiledef.htm 
+
+    => Get base_height from base params for placing column's LCS (Local Coordinate System) 
+    
+    => Create LCS of Column
+    
+    => Construct Column Profile (By Creating another placement for 2D drawing, where Ifc "I" shaped profile is drawn)
+    
+    => Extrude Column Profile
+    
+    => Create Product Representation (Here its just the extruded solid body, but this can be combined with some datum plane or axis)
+    
+    => Assign the product to Ifc element called "IfcColumn" with the created LCS
+    
+    => Place the IfcColumn in the ground storey
+
+    => NOTE: This class has poor discipline compared to the parent class
+    """
+
     def __init__(self, column_params, base_params, **kwargs):
         self.column_params = column_params
         super().__init__(base_params, **kwargs)
@@ -69,6 +99,7 @@ class Column(ColumnBase):
         self.extrude_column_profile()
         self.column_product_representation = self.create_product_representation(self.extruded_column)
         self.column_product_as_ifccolumn()
+        self.place_ifcelement_in_storey(self.column_as_ifccolumn, self.building_storey)
 
     def construct_column_profile2d(self):
         self.column_profile_placement = self.ifcfile.createIfcAxis2Placement2D(self.ori, self.Xdir)
@@ -88,13 +119,6 @@ class Column(ColumnBase):
             "Representation": self.column_product_representation
         }
         self.column_as_ifccolumn = self.ifcfile.createIfcColumn(**params)
-        params = {
-            "GlobalId": self.guid(),
-            "OwnerHistory": self.owner_history,
-            "RelatedElements": [self.column_as_ifccolumn],
-            "RelatingStructure": self.building_storey
-        }
-        self.ifcfile.createIfcRelContainedInSpatialStructure(**params)
         
 column_params = {
     "OverallWidth": 0.6,
@@ -124,5 +148,5 @@ CONFIG = {
 }
 
 column_obj = Column(column_params, base_params, **CONFIG)
-
+ColumnBase()
 column_obj.ifcfile.write("Samples/" + PROJECTNAME + ".ifc")
