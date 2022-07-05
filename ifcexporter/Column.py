@@ -1,9 +1,6 @@
-from IfcGeometry import *
+from IfcInitializer import *
 
-TIME = time.time()
-PROJECTNAME = "Column"
-
-class ColumnBase(IfcGeometry):
+class ColumnBase(IfcObject):
     """
     => A square shaped column base of square width "w" and height "h"
 
@@ -47,7 +44,7 @@ class ColumnBase(IfcGeometry):
         extruded_base = self.extrude_base_profile(base_profile)
         base_product_representation = self.create_product_representation(extruded_base)
         base_as_ifccolumn = self.base_product_as_ifccolumn(base_product_representation)
-        self.place_ifcelement_in_storey(base_as_ifccolumn, self.building_storey)
+        self.place_ifcelement_in_storey(base_as_ifccolumn, self.ground_storey)
 
     def construct_base_profile2d(self):
         base_profile_placement = self.ifcfile.createIfcAxis2Placement2D(self.ori, self.Xdir)
@@ -99,7 +96,7 @@ class Column(ColumnBase):
         self.extrude_column_profile()
         self.column_product_representation = self.create_product_representation(self.extruded_column)
         self.column_product_as_ifccolumn()
-        self.place_ifcelement_in_storey(self.column_as_ifccolumn, self.building_storey)
+        self.place_ifcelement_in_storey(self.column_as_ifccolumn, self.ground_storey)
 
     def construct_column_profile2d(self):
         self.column_profile_placement = self.ifcfile.createIfcAxis2Placement2D(self.ori, self.Xdir)
@@ -135,17 +132,5 @@ base_params = {
     "base_height": 1.5
 }
 
-CONFIG = {
-    "filename": PROJECTNAME + ".ifc",
-    "timestamp": TIME,
-    "timestring": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(TIME)),
-    "creator": "Mukunth A G",
-    "organization": "IIT Bombay",
-    "application": "IfcOpenShell", 
-    "application_version": "0.7.0-1b1fd1e6",
-    "project_globalid": ifcops.guid.new(), 
-    "project_name": PROJECTNAME + "Osdag",
-}
-
-column_obj = Column(column_params, base_params, **CONFIG)
-column_obj.ifcfile.write("Samples/" + PROJECTNAME + ".ifc")
+column_obj = Column(column_params, base_params, filename = "ColumnTest.ifc")
+column_obj.write_ifcfile()
