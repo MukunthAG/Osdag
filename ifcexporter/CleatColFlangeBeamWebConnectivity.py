@@ -9,7 +9,7 @@ class CleatColFlangeBeamWebConnectivity(IfcObject):
         super().__init__(**kwgs)
         self.dd = design_data 
         self.fetch_data()
-        self.create_and_place()
+        self.create_and_assemble()
         self.create_heirarchy()
     
     def fetch_data(self):
@@ -18,7 +18,7 @@ class CleatColFlangeBeamWebConnectivity(IfcObject):
         self.angle_data = self.dd["angle"]
         self.gap = self.dd["gap"]
     
-    def create_and_place(self):
+    def create_and_assemble(self):
         self.create_column()
         self.create_beam()
         self.create_angle()

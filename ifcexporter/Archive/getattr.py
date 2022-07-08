@@ -6,4 +6,4 @@ def get_attr(name):
         ele = schema.declaration_by_name(name)
         pp.pprint(ele.all_attributes())
     
-get_attr("IfcColumn")
+get_attr("IfcShapeRepresentation")
