@@ -13,6 +13,7 @@ Created on 11-May-2015
 
 import copy
 import numpy
+import json
 
 
 class ColFlangeBeamWeb(object):
@@ -37,6 +38,15 @@ class ColFlangeBeamWeb(object):
         self.create_beam_geometry()
         self.create_angle_geometry()
         self.create_nut_bolt_array()
+
+        location_data = dict(
+            column = self.column.location.tolist(),
+            beam = self.beam.location.tolist(),
+            angle = self.angle.location.tolist(),
+            angleLeft = self.angleLeft.location.tolist()
+        )
+
+        json.dump(location_data, open("ifcexporter/LocationData/CleatColFlangeBeamWebConnectivity.json",'w'))
         
         # Call for create_model
         self.columnModel = self.column.create_model()
@@ -50,22 +60,22 @@ class ColFlangeBeamWeb(object):
         column_origin = numpy.array([0, 0, 0])
         column_u_dir = numpy.array([0, 1.0, 0])
         wDir1 = numpy.array([0.0, 0, 1.0])
+        self.column.location = numpy.array([column_origin, column_u_dir, wDir1])
         self.column.place(column_origin, column_u_dir, wDir1)
         
     def create_beam_geometry(self):
         beam_origin = ((self.column.sec_origin + self.column.D / 2) * (-self.column.vDir)) + (self.column.length / 2 * self.column.wDir) + (self.gap * (-self.column.vDir))
         uDir = numpy.array([0, 1.0, 0])
         wDir = numpy.array([1.0, 0, 0.0])
+        self.beam.location = numpy.array([beam_origin, uDir, wDir])
         self.beam.place(beam_origin, uDir, wDir)
     
     def create_angle_geometry(self):
         angle0_origin = (self.beam.sec_origin + (self.beam.D / 2.0 - self.beam.T - self.beam.R1 - 5) * (self.beam.vDir) +
                          (self.beam.t / 2 * self.beam.uDir) + (self.fillet_gap) * (-self.beam.wDir)) # 0.1 is the extra margin for fillet of the angel
-
-        # uDir0 = numpy.array([0, 0, 1.0])
-        # wDir0 = numpy.array([0, -1.0, 0])
         uDir0 = numpy.array([0, 1.0, 0])
         wDir0 = numpy.array([0, 0, -1.0])
+        self.angle.location = numpy.array([angle0_origin, uDir0, wDir0])
         self.angle.place(angle0_origin, uDir0, wDir0)
 
         angle1_origin = (self.beam.sec_origin +
@@ -73,44 +83,13 @@ class ColFlangeBeamWeb(object):
                         (self.beam.t / 2 * self.beam.uDir) + (self.fillet_gap) * (-self.beam.wDir)) # 0.1 is the extra margin for fillet of the angel
         uDir1 = numpy.array([0, -1.0, 0])
         wDir1 = numpy.array([0, 0, 1.0])
-        # uDir1 = numpy.array([1.0, 0.0, 0])
-        # wDir1 = numpy.array([0, -1.0, 0])
-
+        self.angleLeft.location = numpy.array([angle1_origin, uDir1, wDir1])
         self.angleLeft.place(angle1_origin, uDir1, wDir1)
 
     def create_nut_bolt_array(self):
-        # nut_bolt_array_origin = self.angleLeft.sec_origin
-        # nut_bolt_array_origin = nut_bolt_array_origin + self.angleLeft.T * self.angleLeft.wDir
-        # nut_bolt_array_origin = nut_bolt_array_origin + self.angleLeft.A * self.angleLeft.uDir
-        #
-        # gauge_dir = self.angleLeft.uDir
-        # pitch_dir = self.angleLeft.vDir
-        # bolt_dir = -self.angleLeft.wDir
-        #
-        # c_nutbolt_array_origin = self.angle.sec_origin
-        # c_nutbolt_array_origin = c_nutbolt_array_origin + self.angle.T * self.angle.uDir
-        # c_nutbolt_array_origin = c_nutbolt_array_origin + self.angle.B * self.angle.wDir
-        #
-        # c_gauge_dir = self.angle.wDir
-        # c_pitch_dir = self.angle.vDir
-        # c_bolt_dir = -self.angle.uDir
-        #
-        # c_nutbolt_array_origin1 = self.angleLeft.sec_origin
-        # c_nutbolt_array_origin1 = c_nutbolt_array_origin1 + self.angle.T * self.angle.uDir
-        # c_nutbolt_array_origin1 = c_nutbolt_array_origin - (self.beam.t + self.angle.B) * self.angle.wDir
-        # c_nutbolt_array_origin1 = c_nutbolt_array_origin1 + (self.angle.L * self.angle.vDir)
-        #
-        # c_gauge_dir1 = self.angle.wDir
-        # c_pitch_dir1 = self.angle.vDir
-        # c_bolt_dir1 = -self.angle.uDir
-        #
-        # self.nut_bolt_array.place(nut_bolt_array_origin, -gauge_dir, pitch_dir, bolt_dir, c_nutbolt_array_origin, -c_gauge_dir, c_pitch_dir, c_bolt_dir,
-        #                           c_nutbolt_array_origin1, c_gauge_dir1, c_pitch_dir1, c_bolt_dir1)
-        ###############################################
         nut_bolt_array_origin = self.angleLeft.sec_origin
         nut_bolt_array_origin = nut_bolt_array_origin + self.angleLeft.T * self.angleLeft.uDir
         nut_bolt_array_origin = nut_bolt_array_origin + self.angleLeft.A * self.angleLeft.vDir
-
 
         gauge_dir = self.angleLeft.vDir
         pitch_dir = self.angleLeft.wDir
@@ -119,9 +98,6 @@ class ColFlangeBeamWeb(object):
         c_nutbolt_array_origin = self.angle.sec_origin
         c_nutbolt_array_origin = c_nutbolt_array_origin + self.angle.T * self.angle.vDir
         c_nutbolt_array_origin = c_nutbolt_array_origin + self.angle.B * self.angle.uDir
-        # c_nutbolt_array_origin = self.angle.sec_origin
-        # c_nutbolt_array_origin = c_nutbolt_array_origin + self.angle.T * self.angle.uDir
-        # c_nutbolt_array_origin = c_nutbolt_array_origin + self.angle.B * self.angle.wDir
 
         c_gauge_dir = self.angle.uDir
         c_pitch_dir = self.angle.wDir
@@ -148,7 +124,6 @@ class ColFlangeBeamWeb(object):
     def get_nutboltmodels(self):
         
         return self.nut_bolt_array.get_model()
-        # return self.nut_bolt_array.getboltModels()
          
     def get_beamModel(self):
         final_beam = self.beamModel
@@ -156,13 +131,6 @@ class ColFlangeBeamWeb(object):
         for bolt in nut_bolt_list[0:(len(nut_bolt_list) // 2)]:
             final_beam = BRepAlgoAPI_Cut(final_beam, bolt).Shape()
         return final_beam
-    
-    # def get_columnModel(self):
-    #     final_beam = self.columnModel
-    #     nut_bolt_list = self.nut_bolt_array.get_models()
-    #     for bolt in nut_bolt_list[:]:
-    #         final_beam = BRepAlgoAPI_Cut(final_beam, bolt).Shape()
-    #     return final_beam
 
     def get_columnModel(self):
         final_beam = self.columnModel

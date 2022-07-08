@@ -129,7 +129,7 @@ class IfcObject():
         self.building = self.ifcfile.createIfcBuilding(**self.building_data)
 
     def create_ifcbuildingstorey(self, elevation = 0, name = "Ground", description = "Ground Level"):
-        self.storey_placement = self.ifcfile.createIfcLocalPlacement(PlacementRelTo = self.building_placement)
+        self.ground_storey_placement = self.ifcfile.createIfcLocalPlacement(PlacementRelTo = self.building_placement)
         self.buildingstorey_data = {
             "GlobalId": self.guid(),
             "OwnerHistory": self.owner_history,
@@ -165,15 +165,15 @@ class IfcObject():
             dir = self.ifcfile.createIfcDirection(dir)
         return dir
 
-    def create_ifcaxis2placement(self, point = O, new_Zdir = Z, ref_dir = X):
+    def create_ifcaxis2placement(self, point = O, uDir = X, wDir = Z):
         point = self.create_ifcpoint(point)
-        new_Zdir = self.create_ifcdir(new_Zdir)
-        ref_dir = self.create_ifcdir(ref_dir)
-        axis2placement = self.ifcfile.createIfcAxis2Placement3D(point, new_Zdir, ref_dir)
+        wDir = self.create_ifcdir(wDir)
+        uDir = self.create_ifcdir(uDir)
+        axis2placement = self.ifcfile.createIfcAxis2Placement3D(point, wDir, uDir)
         return axis2placement
 
-    def create_ifclocalplacement(self, point = O, new_Zdir = Z, ref_dir = X, relative_to = None):
-        axis2placement = self.create_ifcaxis2placement(point, new_Zdir, ref_dir)
+    def create_ifclocalplacement(self, point = O, uDir = X, wDir = Z, relative_to = None):
+        axis2placement = self.create_ifcaxis2placement(point, uDir, wDir)
         ifclocalplacement2 = self.ifcfile.createIfcLocalPlacement(relative_to, axis2placement)
         return ifclocalplacement2
 
@@ -199,8 +199,13 @@ class IfcObject():
         self.ori = self.create_ifcpoint(new_ori)
         return self.ori
 
-    def place(self, point = O, new_Zdir = Z, ref_dir = X, relative_to = None):
-        return self.create_ifclocalplacement(point, new_Zdir, ref_dir, relative_to)
+    def place(self, location = [O, X, Z], relative_to = None):
+        if relative_to == None:
+            relative_to = self.ground_storey_placement
+        point = location[0]
+        uDir = location[1]
+        wDir = location[2]
+        return self.create_ifclocalplacement(point, uDir, wDir, relative_to)
     
     def place_ifcelement_in_storey(self, ifcelement, storey):
         params = {
