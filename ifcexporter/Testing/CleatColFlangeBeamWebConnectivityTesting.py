@@ -1,6 +1,7 @@
-from IfcInitializer import *
-from IfcCAD.ISection import ISection
-from IfcCAD.Angle import Angle
+from ifcexporter.IfcItems.IfcInitializer import *
+from ifcexporter.IfcItems.RawDesign.ISection import ISection
+from ifcexporter.IfcItems.RawDesign.Angle import Angle
+from ifcexporter.IfcItems.Fastener import Fastener
 import numpy as np
 import json
 
@@ -25,12 +26,14 @@ class CleatColFlangeBeamWebConnectivity(IfcObject):
         self.beam_ld = self.ld["beam"]
         self.angle_ld = self.ld["angle"]
         self.angleLeft_ld = self.ld["angleLeft"]
+        self.bolts_and_nuts_ld = self.ld["bolts_and_nuts"]
     
     def create_and_assemble(self):
         self.create_column()
         self.create_beam()
         self.create_angle()
         self.create_angleLeft()
+        self.create_nutBoltArray()
     
     def create_heirarchy(self):
         self.place_ifcelement_in_storey(self.ifccolumn, self.ground_storey)
@@ -56,10 +59,21 @@ class CleatColFlangeBeamWebConnectivity(IfcObject):
     def create_angleLeft(self):
         self.angleLeft_placement = self.place(location = self.angleLeft_ld)
         self.ifcplate_angleLeft = self.angle.create_angle_as_ifcplate("Angle Left", self.angleLeft_placement)
+    
+    def create_nutBoltArray(self):
+        for name, location in self.bolts_and_nuts_ld.items():
+            fname = "DesignData/" + name + ".brep"
+            shape = self.read_brep(fname)
+            representation = ifcgeom.tesselate(self.ifcfile.schema, shape, 1.)
+            self.ifcfile.add(representation)
+            fastener = Fastener(self.ifcfile, representation)
+            fastener_placement = self.place(location = location)
+            self.ifcmechanicalfastener = fastener.create_ifcmechanicalfastener(name, fastener_placement)
+            self.place_ifcelement_in_storey(self.ifcmechanicalfastener, self.ground_storey)
 
 if __name__ == "__main__":
     CONFIG = {
-        "filename": "CleatTest2.ifc",
+        "filename": "CleatTestFinal.ifc",
     }
     design_data = json.load(open("DesignData/CleatColFlangeBeamWebConnectivity.json"))
     location_data = json.load(open("LocationData/CleatColFlangeBeamWebConnectivity.json"))

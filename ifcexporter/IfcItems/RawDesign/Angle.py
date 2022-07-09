@@ -29,5 +29,5 @@ class Angle(IfcObject):
             "ObjectPlacement": placement,
             "Representation": self.product_rep
         }
-        ifccolumn = self.ifcfile.createIfcPlate(**params)
-        return ifccolumn
+        ifcplate = self.ifcfile.createIfcPlate(**params)
+        return ifcplate

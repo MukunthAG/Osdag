@@ -1,7 +1,14 @@
-import ifcopenshell as ifcops
+import os
+import glob
 import time 
+import json
 import tempfile
 import numpy as np
+import ifcopenshell as ifcops
+import ifcopenshell.geom as ifcgeom
+from OCC.Core.BRep import BRep_Builder
+from OCC.Core.TopoDS import TopoDS_Shape
+from OCC.Core.BRepTools import breptools
 
 # GLOBAL
 
@@ -14,14 +21,9 @@ i = np.array([1,0,0])
 j = np.array([0,1,0])
 k = np.array([0,0,1])
 
-def ifc2np(ifcpoint):
-    return np.array(ifcpoint)[0]
-
-def to_tuple(ifc_or_np):
-    if isinstance(ifc_or_np, ifcops.entity_instance):
-        ifc_or_np = ifc2np(ifc_or_np)
-    tup = tuple([float(e) for e in ifc_or_np])
-    return tup
+def temp_brep(prism, name):
+    fname = "ifcexporter/Temp/" + name + ".brep"
+    breptools.Write(prism, fname)
 
 #MAIN class
 
@@ -139,6 +141,8 @@ class IfcObject():
             "Elevation": elevation
         }
         self.ground_storey = self.ifcfile.createIfcBuildingStorey(**self.buildingstorey_data)
+        self.ifcfile.ground_storey_placement = self.ground_storey_placement
+        self.ifcfile.ground_storey = self.ground_storey
 
     def create_ifcrelaggregates(self):
         self.ifcfile.createIfcRelAggregates(self.guid(), self.owner_history, "Building Container", "Ground level to Building", self.building, [self.ground_storey])
@@ -146,7 +150,7 @@ class IfcObject():
         self.ifcfile.createIfcRelAggregates(self.guid(), self.owner_history, "Project Container", "Site to Project", self.project, [self.site])
     
     def create_ifcpoint(self, point):
-        point = to_tuple(point)
+        point = self.to_tuple(point)
         if point == O:
             point = self.ori
         else:
@@ -154,7 +158,7 @@ class IfcObject():
         return point
     
     def create_ifcdir(self, dir):
-        dir = to_tuple(dir)
+        dir = self.to_tuple(dir)
         if dir == X: 
             dir = self.Xdir
         elif dir == Y: 
@@ -195,10 +199,6 @@ class IfcObject():
         product_representation = self.ifcfile.createIfcProductDefinitionShape(Representations = [shape_representation])
         return product_representation
 
-    def set_ori(self, new_ori):
-        self.ori = self.create_ifcpoint(new_ori)
-        return self.ori
-
     def place(self, location = [O, X, Z], relative_to = None):
         if relative_to == None:
             relative_to = self.ground_storey_placement
@@ -218,10 +218,49 @@ class IfcObject():
     
     def write_ifcfile(self, directory = "Samples"):
         """
-        Directory inside ifcexporter
+        Only for testing, use ifc_write_to_path instead
         """
         filename = self.CONFIG.get("filename")
         self.ifcfile.write(directory + "/" + filename)
     
+    def ifc_write_to_path(self, path):
+        self.ifcfile.write(path)
+
+    def display_ifc_geometry(self):
+        ifcgeom.utils.initialize_display()
+        settings = ifcgeom.settings(USE_PYTHON_OPENCASCADE=True)
+        for item in ifcgeom.iterate(
+            settings, self.ifcfile, exclude=["IfcSpace", "IfcOpeningElement"]
+        ):
+            ifcgeom.utils.display_shape(item)
+        ifcgeom.utils.main_loop()
+        
+    def clear_Temp(self):
+        files = glob.glob('ifcexporter/Temp/*')
+        for f in files:
+            os.remove(f)
+    
+    def read_brep(self, fname):
+        shape = TopoDS_Shape()
+        builder = BRep_Builder()
+        breptools.Read(shape, fname, builder)
+        return shape
+    
+    def get_rep(self, name):
+        fname = "ifcexporter/Temp/" + name + ".brep"
+        shape = self.read_brep(fname)
+        representation = ifcgeom.tesselate(self.ifcfile.schema, shape, 1.)
+        self.ifcfile.add(representation)
+        return representation
+
     def guid(self):
         return ifcops.guid.new()
+    
+    def ifc2np(self, ifcpoint):
+        return np.array(ifcpoint)[0]
+
+    def to_tuple(self, ifc_or_np):
+        if isinstance(ifc_or_np, ifcops.entity_instance):
+            ifc_or_np = self.ifc2np(ifc_or_np)
+        tup = tuple([float(e) for e in ifc_or_np])
+        return tup

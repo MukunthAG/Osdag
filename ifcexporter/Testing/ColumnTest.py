@@ -1,4 +1,4 @@
-from IfcInitializer import *
+from ifcexporter.IfcItems.IfcInitializer import *
 
 class ColumnBase(IfcObject):
     """

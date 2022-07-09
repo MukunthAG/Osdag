@@ -6,7 +6,6 @@ modified : Sourabh Das, Darshan Vishwakarma
 '''
 
 # from utils.common.component import Bolt,Beam,Section,Angle,Plate,Nut,Column,Weld
-import json
 from cad.items.notch import Notch
 from cad.items.bolt import Bolt
 from cad.items.nut import Nut
@@ -552,102 +551,6 @@ class CommonDesignLogic(object):
         colwebconn.create_3dmodel()
         return colwebconn
 
-    def create3DCleatColFlangeBeamWeb(self):
-        """Test code by MUKUNTH"""
-        print("hhhhhh")
-        A = self.module_class()
-
-        bolt_dia = int(A.bolt.bolt_diameter_provided)
-        bolt_r = bolt_dia / 2.0
-        bolt_R = self.boltHeadDia_Calculation(bolt_dia) / 2.0
-        bolt_T = self.boltHeadThick_Calculation(bolt_dia)
-        bolt_Ht = self.boltLength_Calculation(bolt_dia)
-        nut_T = self.nutThick_Calculation(bolt_dia)  
-        nut_Ht = bolt_dia
-
-        gap = A.cleat.gap
-
-        nut_space = A.supported_section.web_thickness + 2 * A.cleat.thickness + nut_T
-        cnut_space = A.supporting_section.flange_thickness + A.cleat.thickness + nut_T
-
-        angle_data = dict(
-            L=A.cleat.height, 
-            A=A.cleat.leg_a_length, 
-            B=A.cleat.leg_b_length, 
-            T=A.cleat.thickness,
-            R1=A.cleat.root_radius, 
-            R2=A.cleat.toe_radius
-        )
-        gap_data = dict(
-            gap = gap
-        )
-        bolt_data = dict(
-            R=bolt_R, 
-            T=bolt_T, 
-            H=bolt_Ht, 
-            r=bolt_r
-        )
-        nut_data = dict(
-            R=bolt_R, 
-            T=nut_T, 
-            H=nut_Ht, 
-            innerR1=bolt_r
-        )
-        supported_data = dict(
-            B=A.supported_section.flange_width, 
-            T=A.supported_section.flange_thickness,
-            D=A.supported_section.depth,
-            t=A.supported_section.web_thickness, 
-            R1=A.supported_section.root_radius,
-            R2=A.supported_section.toe_radius,
-            alpha=A.supported_section.flange_slope, 
-            length=500, 
-            notchObj=None
-        )
-        supporting_data = dict(
-            B=A.supporting_section.flange_width, 
-            T=A.supporting_section.flange_thickness,
-            D=A.supporting_section.depth, 
-            t=A.supporting_section.web_thickness,
-            R1=A.supporting_section.root_radius, 
-            R2=A.supporting_section.toe_radius,
-            alpha=A.supporting_section.flange_slope,
-            length=max(1000, (500 + A.supported_section.depth)), 
-            notchObj=None
-        )
-        nut_space_data = dict(
-            nut_space = A.supported_section.web_thickness + 2 * A.cleat.thickness + nut_T
-        )
-        cnut_space_data = dict(
-            cnut_space = A.supporting_section.flange_thickness + A.cleat.thickness + nut_T
-        )
-        angle = Angle(**angle_data)
-        supported = ISection(**supported_data)
-        supporting = ISection(**supporting_data)
-        bolt = Bolt(**bolt_data)  
-        nut = Nut(**nut_data)
-
-        angle_data.update({"profile_coords": [i.tolist() for i in angle.points]})
-
-        nut_bolt_array = cleatNutBoltArray(A.cleat, nut, bolt, nut_space, cnut_space)
-        colflangeconn = cleatColFlangeBeamWeb(supporting, supported, angle, nut_bolt_array, gap)
-
-        ifc_export_data = {
-            "angle": angle_data,
-            "gap": gap_data,
-            "bolt": bolt_data,
-            "nut": nut_data,
-            "supported": supported_data,
-            "supporting": supporting_data,
-            "nut_space": nut_space_data,
-            "cnut_space": cnut_space_data 
-        }
-
-        json.dump(ifc_export_data, open("ifcexporter/DesignData/CleatColFlangeBeamWebConnectivity.json",'w'))
-
-        colflangeconn.create_3dmodel()
-        return colflangeconn
-
     def create3DColFlangeBeamWeb(self):
         '''
         Creating 3d cad model with column flange beam web connection
@@ -655,11 +558,6 @@ class CommonDesignLogic(object):
         '''
 
         A = self.module_class()
-
-        if self.connection == KEY_DISP_CLEATANGLE:
-            """Test Code by MUKUNTH"""
-            cleatColFlangeBeamWeb = self.create3DCleatColFlangeBeamWeb()
-            return cleatColFlangeBeamWeb
 
         if self.connection == KEY_DISP_FINPLATE:
             # A = self.module_class()
@@ -777,7 +675,6 @@ class CommonDesignLogic(object):
         #     colflangeconn = seatColFlangeBeamWeb(column, beam, seatangle, topclipangle, nutBoltArray,gap)
 
         colflangeconn.create_3dmodel()
-        print("aaaaaaaaaaa")
         return colflangeconn
 
     def createBBCoverPlateCAD(self):
@@ -2529,6 +2426,5 @@ class CommonDesignLogic(object):
 # if __name__!= "__main__":
 #
 #     CommonDesignLogic()
-
 
 

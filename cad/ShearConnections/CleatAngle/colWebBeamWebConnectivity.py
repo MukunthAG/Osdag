@@ -6,8 +6,9 @@ Created on 11-May-2015
 
 import numpy
 import copy
+import json
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut
-
+from ifcexporter.IfcItems.IfcInitializer import temp_brep
 
 class ColWebBeamWeb(object):
     
@@ -37,6 +38,23 @@ class ColWebBeamWeb(object):
         self.angleModel = self.angle.create_model()
         self.angleLeftModel = self.angleLeft.create_model()
         self.nutboltArrayModels = self.nut_bolt_array.create_model()
+
+        #For Ifc Export
+        
+        ifc_class_name = "CleatAngle_colWebBeamWebConnectivity"
+
+        self.aux_data = {} # For Ifc_export
+        
+        temp_brep(self.columnModel, "column")
+        temp_brep(self.beamModel, "beam")
+        temp_brep(self.angleModel, "angle")
+        temp_brep(self.angleLeftModel, "angleLeft")
+        for i, model in enumerate(self.nut_bolt_array.models):
+            temp_brep(model, "fastener" + str(i))
+
+        self.aux_data["no_of_fasteners"] = len(self.nut_bolt_array.models)
+
+        json.dump(self.aux_data, open("ifcexporter/Temp/"+ ifc_class_name + ".json",'w'))
         
     def create_column_geometry(self):
         column_origin = numpy.array([0, 0, 0])
