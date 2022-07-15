@@ -35,6 +35,12 @@ class IfcObject():
             self.ifcfile = ifcfile
             self.extract_data_from_ifctemplate()
     
+    def assign_storey(self, ifcobj, storey):
+        if storey == None:
+            self.place_ifcelement_in_storey(ifcobj, self.ifcfile.ground_storey)
+        else:
+            self.place_ifcelement_in_storey(ifcobj, storey)
+    
     def create_ifcfile(self, **kwgs):
         self.time = time.time()
         self.CONFIG = {

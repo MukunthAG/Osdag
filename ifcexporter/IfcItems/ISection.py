@@ -3,7 +3,6 @@ from ifcexporter.IfcItems.IfcInitializer import *
 class ISection(IfcObject):
     def __init__(self, ifcfile, name, placement = None, storey = None, type = "column", **kwgs):
         super().__init__(ifcfile)
-        self.ifcfile = ifcfile
         self.name = name
         self.product_rep = self.get_rep(name)
         if placement == None:
@@ -11,14 +10,10 @@ class ISection(IfcObject):
         self.type = type
         self.process_kwgs(kwgs)
         ifcobj = self.create_ifcobj()
-        self.is_ground(ifcobj, storey)
+        self.assign_storey(ifcobj, storey)
     
     def process_kwgs(self, kwgs):
         pass
-
-    def is_ground(self, ifcobj, storey):
-        if storey == None:
-            self.place_ifcelement_in_storey(ifcobj, self.ifcfile.ground_storey)
 
     def create_ifcobj(self):
         params = {
