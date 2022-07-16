@@ -10,10 +10,11 @@ class ISection(IfcObject):
         self.type = type
         self.process_kwgs(kwgs)
         ifcobj = self.create_ifcobj()
+        self.assign_Pset(ifcobj, "Pset_ProfileData", self.Pset_ProfileData)
         self.assign_storey(ifcobj, storey)
     
     def process_kwgs(self, kwgs):
-        pass
+        self.Pset_ProfileData = kwgs.get("Pset_ProfileData")
 
     def create_ifcobj(self):
         params = {

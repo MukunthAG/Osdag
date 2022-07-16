@@ -34,13 +34,7 @@ class IfcObject():
         else:
             self.ifcfile = ifcfile
             self.extract_data_from_ifctemplate()
-    
-    def assign_storey(self, ifcobj, storey):
-        if storey == None:
-            self.place_ifcelement_in_storey(ifcobj, self.ifcfile.ground_storey)
-        else:
-            self.place_ifcelement_in_storey(ifcobj, storey)
-    
+
     def create_ifcfile(self, **kwgs):
         self.time = time.time()
         self.CONFIG = {
@@ -221,6 +215,34 @@ class IfcObject():
             "RelatingStructure": storey
         }
         self.ifcfile.createIfcRelContainedInSpatialStructure(**params)
+
+    def assign_storey(self, ifcobj, storey):
+        if storey == None:
+            self.place_ifcelement_in_storey(ifcobj, self.ifcfile.ground_storey)
+        else:
+            self.place_ifcelement_in_storey(ifcobj, storey)
+
+    def assign_Pset(self, ifcobj, Pset_name, props):
+        ifc_prop_single_values = []
+        for k, v in props.items():
+            v = str(v)
+            psv = self.ifcfile.createIfcPropertySingleValue(k, None, self.ifcfile.createIfcText(v), None)
+            ifc_prop_single_values.append(psv)
+        Pset = self.ifcfile.createIfcPropertySet(
+            self.guid(), 
+            self.owner_history,
+            Pset_name,
+            None,
+            ifc_prop_single_values
+        )
+        self.ifcfile.createIfcRelDefinesByProperties(
+            self.guid(), 
+            self.owner_history,
+            None,
+            None,
+            [ifcobj],
+            Pset
+        )
     
     def write_ifcfile(self, directory = "Samples"):
         """

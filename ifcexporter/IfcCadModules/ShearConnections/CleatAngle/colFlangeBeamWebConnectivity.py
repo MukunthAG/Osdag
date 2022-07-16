@@ -19,10 +19,18 @@ class CleatAngle_colFlangeBeamWebConnectivity(IfcObject):
         self.create_fasteners()
 
     def create_column(self):
-        ISection(self.ifcfile, "column", type = "column")
+        ISection(self.ifcfile, 
+            name = "column", 
+            type = "column", 
+            Pset_ProfileData = self.aux_data["Psets"]["ColumnProfileData"]
+        )
     
     def create_beam(self):
-        ISection(self.ifcfile, "beam", type = "beam")
+        ISection(self.ifcfile, 
+            name = "beam", 
+            type = "beam", 
+            Pset_ProfileData = self.aux_data["Psets"]["BeamProfileData"]
+        )
     
     def create_angle(self):
         Plate(self.ifcfile, "angle")

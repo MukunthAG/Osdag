@@ -62,6 +62,12 @@ class ColFlangeBeamWeb(object):
 
         self.aux_data["no_of_fasteners"] = len(self.nut_bolt_array.models)
 
+        Psets = dict(
+            ColumnProfileData = self.column.Pset_ProfileData,
+            BeamProfileData = self.beam.Pset_ProfileData
+        )
+        self.aux_data.update(dict(Psets = Psets))
+
         json.dump(self.aux_data, open("ifcexporter/Temp/"+ ifc_class_name + ".json",'w'))
             
     def create_column_geometry(self):
@@ -70,12 +76,26 @@ class ColFlangeBeamWeb(object):
         column_u_dir = numpy.array([0, 1.0, 0])
         wDir1 = numpy.array([0.0, 0, 1.0])
         self.column.place(column_origin, column_u_dir, wDir1)
+
+        self.column.Pset_ProfileData = dict(
+            OverallWidth = self.column.B,
+            OverallDepth = self.column.D,
+            WebThickness = self.column.t,
+            FlangeThickness = self.column.T,
+        )
         
     def create_beam_geometry(self):
         beam_origin = ((self.column.sec_origin + self.column.D / 2) * (-self.column.vDir)) + (self.column.length / 2 * self.column.wDir) + (self.gap * (-self.column.vDir))
         uDir = numpy.array([0, 1.0, 0])
         wDir = numpy.array([1.0, 0, 0.0])
         self.beam.place(beam_origin, uDir, wDir)
+
+        self.beam.Pset_ProfileData = dict(
+            OverallWidth = self.beam.B,
+            OverallDepth = self.beam.D,
+            WebThickness = self.beam.t,
+            FlangeThickness = self.beam.T,
+        )
     
     def create_angle_geometry(self):
         angle0_origin = (self.beam.sec_origin + (self.beam.D / 2.0 - self.beam.T - self.beam.R1 - 5) * (self.beam.vDir) +
