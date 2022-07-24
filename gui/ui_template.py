@@ -2590,6 +2590,8 @@ class Window(QMainWindow):
                     ifc_class = self.get_ifc_class(main.module, main.mainmodule)
                     CONFIG = {
                         "filename": os.path.basename(os.path.normpath(fName)),
+                        "creator": "Mukunth A G", # To be changed as the input to come from user
+                        "project_name": "Project Osdag" # To be changed as the input to come from user
                     }
                     ifcobj = ifc_class(**CONFIG)
                     ifcobj.ifc_write_to_path(fName)
